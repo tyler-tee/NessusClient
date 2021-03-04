@@ -192,7 +192,8 @@ class NessusClient:
     def scans_export_request(self, scan_id: int, format: str, scan_info: bool = True, host_info: bool = True, base_score: bool = True,
                              synopsis: bool = True, description: bool = True, see_also: bool = True, solution: bool = True, temporal_score: bool = True,
                              risk_factor: bool = True, base_score_v3: bool = True, temporal_score_v3: bool = True, stig: bool = True,
-                             references: bool = True, exploitable_with: bool = True, plugin_info: bool = True, plugin_output: bool = True):
+                             references: bool = True, exploitable_with: bool = True, plugin_info: bool = True, plugin_output: bool = True,
+                             plugin_id: bool = True, cve: bool = True, risk: bool = True, protocol: bool = True, port: bool = True, plugin_Name: bool = True):
         """
         Export a given scan using its ID.
 
@@ -201,35 +202,60 @@ class NessusClient:
             format (str): File format to use (Nessus, HTML, PDF, CSV, or DB).
         """
 
-        payload = {
-                    "format": format,
-                    "reportContents":
-                        {
-                         "hostSections":
-                            {
-                             "host_information": host_info,
-                             "scan_information": scan_info
-                             },
-                         "vulnerabilitySections":
-                            {
-                             "description": description,
-                             "see_also": see_also,
-                             "solution": solution,
-                             "risk_factor": risk_factor,
-                             "cvss_base_score": base_score,
-                             "cvss_temporal_score": temporal_score,
-                             "cvss3_base_score": base_score_v3,
-                             "cvss3_temporal_score": temporal_score_v3,
-                             "stig_severity": stig,
-                             "references": references,
-                             "exploitable_with": exploitable_with,
-                             "plugin_information": plugin_info,
-                             "plugin_output": plugin_output
-                             }
-                        }
-                    }
+        payload = {"format": format}
 
-        response = self.session.post(self.base_url + f"/scans/{scan_id}/export", data=payload)
+        if format.lower() == 'html':
+            payload['reportContents'] = {
+                                        "hostSections": {
+                                                         "host_information": host_info,
+                                                         "scan_information": scan_info
+                                                        },
+                                        "vulnerabilitySections": {
+                                                         "description": description,
+                                                         "see_also": see_also,
+                                                         "solution": solution,
+                                                         "risk_factor": risk_factor,
+                                                         "cvss_base_score": base_score,
+                                                         "cvss_temporal_score": temporal_score,
+                                                         "cvss3_base_score": base_score_v3,
+                                                         "cvss3_temporal_score": temporal_score_v3,
+                                                         "stig_severity": stig,
+                                                         "references": references,
+                                                         "exploitable_with": exploitable_with,
+                                                         "plugin_information": plugin_info,
+                                                         "plugin_output": plugin_output
+                                                                 }
+                                        }
+
+        elif format.lower() == 'csv':
+            payload['reportContents'] = {
+                                         "csvColumns": {
+                                                        "id": plugin_id,
+                                                        "cve": cve,
+                                                        "risk": risk,
+                                                        "hostname": host_info,
+                                                        "protocol": protocol,
+                                                        "port": port,
+                                                        "plugin_name": plugin_Name,
+                                                        "synopsis": synopsis,
+                                                        "risk_factor": risk_factor,
+                                                        "description": description,
+                                                        "see_also": see_also,
+                                                        "solution": solution,
+                                                        "cvss": base_score,
+                                                        "cvss_temporal_score": temporal_score,
+                                                        "cvss3_base_score": base_score_v3,
+                                                        "cvss3_temporal_score": temporal_score_v3,
+                                                        "stig_severity": stig,
+                                                        "references": references,
+                                                        "exploitable_with": exploitable_with,
+                                                        "plugin_information": plugin_info,
+                                                        "plugin_output": plugin_output
+                                                       }
+                                        }
+
+
+        response = self.session.post(self.base_url + f"/scans/{scan_id}/export", json=payload)
 
         if response.status_code == 200:
             return response.json()
